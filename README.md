@@ -2,6 +2,10 @@
 
 Study of PyTorch
 
+- [Pytorch](https://pytorch.org)
+    - [Docs](https://pytorch.org/docs/stable/index.html)
+    - [Tutorials](https://pytorch.org/tutorials)
+
 ## Environment
 
 - NVIDIA GeForce RTX 2060 (6GB VRAM)
