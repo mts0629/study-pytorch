@@ -1,4 +1,5 @@
 """Train a simple NN with Fashion-MNIST dataset."""
+
 import torch
 
 from torch import nn
@@ -14,7 +15,7 @@ class NeuralNet(nn.Module):
         super().__init__()
         self.flatten = nn.Flatten()
         self.linear_relu_stack = nn.Sequential(
-            nn.Linear(28*28, 512),
+            nn.Linear(in_features=28*28, out_features=512),
             nn.ReLU(),
             nn.Linear(512, 512),
             nn.ReLU(),
