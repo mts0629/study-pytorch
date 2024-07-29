@@ -42,7 +42,7 @@ def train(dataloader, device, model, loss_fn, optimizer):
     size = len(dataloader.dataset)
     num_batches = len(dataloader)
 
-    print_loss_iter = num_batches / 10
+    print_loss_iter = num_batches // 10
 
     model.train()
 
@@ -58,7 +58,7 @@ def train(dataloader, device, model, loss_fn, optimizer):
         optimizer.step()
 
         if i % print_loss_iter == 0:
-            print(f"Loss: {loss.item():.7f} ({(i + 1)*len(x)}/{size})")
+            print(f"Train loss: {loss.item():.7f} ({(i + 1)*len(x)}/{size})")
 
 
 def test(dataloader, device, model, loss_fn):
@@ -79,7 +79,7 @@ def test(dataloader, device, model, loss_fn):
 
     loss /= num_batches
     correct /= size
-    print(f"Test accuracy: {(100*correct):.2f}[%], test avg. loss: {loss:.7f}")
+    print(f"Test accuracy: {(100*correct):.2f}[%], test loss: {loss:.7f}")
 
 
 if __name__ == "__main__":
@@ -104,9 +104,13 @@ if __name__ == "__main__":
         transform=transform
     )
 
-    BATCH_SIZE = 8
-    train_dataloader = DataLoader(training_data, batch_size=BATCH_SIZE)
-    test_dataloader = DataLoader(test_data, batch_size=BATCH_SIZE)
+    BATCH_SIZE = 32
+    train_dataloader = DataLoader(
+        training_data, batch_size=BATCH_SIZE, shuffle=True
+    )
+    test_dataloader = DataLoader(
+        test_data, batch_size=BATCH_SIZE, shuffle=False
+    )
 
     device = "cuda" if torch.cuda.is_available() else "cpu"
 
