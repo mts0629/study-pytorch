@@ -18,18 +18,21 @@ class SimpleCNN(nn.Module):
         self.conv1 = nn.Conv2d(
             in_channels=3, out_channels=16, kernel_size=3, padding=1
         )
+        self.bn1 = nn.BatchNorm2d(num_features=16)
         self.pool = nn.MaxPool2d(kernel_size=2, stride=2)
         self.conv2 = nn.Conv2d(16, 32, 3, padding=1)
+        self.bn2 = nn.BatchNorm2d(32)
         self.conv3 = nn.Conv2d(32, 64, 3, padding=1)
-        self.flatten = nn.Flatten(start_dim=-3)  # C dim for (NCHW) and (CHW)
+        self.bn3 = nn.BatchNorm2d(64)
+        self.flatten = nn.Flatten(start_dim=1)  # C dim for NCHW
         self.fc1 = nn.Linear(in_features=64*4*4, out_features=64)
         self.fc2 = nn.Linear(64, 128)
         self.fc3 = nn.Linear(128, 10)
 
     def forward(self, x):
-        x = self.pool(F.relu(self.conv1(x)))
-        x = self.pool(F.relu(self.conv2(x)))
-        x = self.pool(F.relu(self.conv3(x)))
+        x = self.pool(F.relu(self.bn1(self.conv1(x))))
+        x = self.pool(F.relu(self.bn2(self.conv2(x))))
+        x = self.pool(F.relu(self.bn3(self.conv3(x))))
         x = self.flatten(x)
         x = F.relu(self.fc1(x))
         x = F.relu(self.fc2(x))
@@ -149,10 +152,11 @@ if __name__ == "__main__":
 
     with torch.no_grad():
         first_10_data = [
-            (x, t) for i, (x, t) in enumerate(test_data) if i < 10
+            # Reshape to 4-d
+            (x.unsqueeze(0), t) for i, (x, t) in enumerate(test_data) if i < 10
         ]
         for (x, t) in first_10_data:
             x = x.to(device)
             y = model(x)
-            predicted, actual = classes[y.argmax(0)], classes[t]
+            predicted, actual = classes[y[0].argmax(0)], classes[t]
             print(f'Predicted: "{predicted}", actual: "{actual}"')
