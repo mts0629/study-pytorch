@@ -5,7 +5,7 @@ import torch
 import torch.nn.functional as F
 
 from torch import nn
-from torch.utils.data import DataLoader
+from torch.utils.data import DataLoader, RandomSampler
 from torchvision import datasets
 from torchvision.transforms import v2  # Use transforms.v2 API
 
@@ -136,27 +136,34 @@ if __name__ == "__main__":
     MODEL_PATH = "work/simplecnn.pth"
     torch.save(model.state_dict(), MODEL_PATH)
 
-    print("--------------------")
-    print("Test first 10 data")
-    print("--------------------")
+    NUM_TEST = 10
+    print("------------------------------")
+    print(f"Test with random {NUM_TEST} data")
+    print("------------------------------")
 
     model = SimpleCNN().to(device)
     model.load_state_dict(torch.load(MODEL_PATH))
 
     model.eval()
 
+    # CIFAR-10 classes
     classes = [
         "Plane", "Car", "Bird", "Cat", "Deer",
         "Dog", "Frog", "Horse", "Ship", "Truck",
     ]
 
+    # Random sampling from test dataset
+    sampler = RandomSampler(test_data, num_samples=NUM_TEST)
+    eval_loader = DataLoader(test_data, batch_size=1, sampler=sampler)
+
+    correct = 0
     with torch.no_grad():
-        first_10_data = [
-            # Reshape to 4-d
-            (x.unsqueeze(0), t) for i, (x, t) in enumerate(test_data) if i < 10
-        ]
-        for (x, t) in first_10_data:
+        for x, t in eval_loader:
             x = x.to(device)
             y = model(x)
-            predicted, actual = classes[y[0].argmax(0)], classes[t]
+            p = y[0].argmax(0).to("cpu")
+            predicted, actual = classes[p], classes[t]
             print(f'Predicted: "{predicted}", actual: "{actual}"')
+            if p == t:
+                correct += 1
+    print(f"Correct: {correct}/{NUM_TEST} ({correct / NUM_TEST * 100:.1f}[%])")
