@@ -6,6 +6,8 @@ RUN apt-get update -y && apt-get upgrade -y && apt-get install -y \
 
 RUN pip install matplotlib
 
+ENV TZ Asia/Tokyo
+
 # Add a non-root user (overwrite by Dev Container)
 ARG USER=dev
 ARG UID=1000
