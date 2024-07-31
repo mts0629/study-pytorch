@@ -95,7 +95,7 @@ def test(dataloader, device, model, loss_fn):
             loss += loss_fn(y, t).item()
             correct += (y.argmax(1) == t).type(torch.float).sum().item()
 
-    loss /= num_batches
+    loss /= size
     correct /= size
     print(f"Test accuracy: {(100*correct):.2f}[%], test loss: {loss:.7f}")
 
@@ -104,6 +104,8 @@ def test(dataloader, device, model, loss_fn):
 
 def plot_histories(train_history, test_history, ylabel):
     """Plot train/test histories."""
+    assert len(train_history) == len(test_history)
+
     fig, ax = plt.subplots()
 
     t = np.linspace(1, len(train_history), len(train_history))
@@ -175,10 +177,10 @@ if __name__ == "__main__":
         test_loss, test_acc = test(test_dataloader, device, model, loss_fn)
 
         history["train"]["losses"].append(train_loss)
-        history["test"]["losses"].append(train_loss)
+        history["test"]["losses"].append(test_loss)
 
         history["train"]["accs"].append(train_acc)
-        history["test"]["accs"].append(train_acc)
+        history["test"]["accs"].append(test_acc)
 
     # Plot histories
     plot_histories(
