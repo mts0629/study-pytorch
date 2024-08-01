@@ -28,6 +28,7 @@ class SimpleCNN(nn.Module):
         self.conv3 = nn.Conv2d(32, 64, 3, padding=1)
         self.bn3 = nn.BatchNorm2d(64)
         self.flatten = nn.Flatten(start_dim=1)  # C dim for NCHW
+        self.dropout = nn.Dropout(p=0.5)
         self.fc1 = nn.Linear(in_features=64*4*4, out_features=64)
         self.fc2 = nn.Linear(64, 128)
         self.fc3 = nn.Linear(128, 10)
@@ -37,8 +38,11 @@ class SimpleCNN(nn.Module):
         x = self.pool(F.relu(self.bn2(self.conv2(x))))
         x = self.pool(F.relu(self.bn3(self.conv3(x))))
         x = self.flatten(x)
+        x = self.dropout(x)
         x = F.relu(self.fc1(x))
+        x = self.dropout(x)
         x = F.relu(self.fc2(x))
+        x = self.dropout(x)
         x = self.fc3(x)
         return x
 
@@ -165,7 +169,7 @@ if __name__ == "__main__":
         "test": {"losses": [], "accs": []},
     }
 
-    EPOCHS = 10
+    EPOCHS = 20
     for epoch in range(EPOCHS):
         print(f"--------------------")
         print(f"Epoch {epoch + 1}")
