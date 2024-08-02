@@ -49,14 +49,15 @@ class SimpleCNN(nn.Module):
 
 def train(dataloader, device, model, loss_fn, optimizer):
     """Train the network."""
-    size = len(dataloader.dataset)
+    data_size = len(dataloader.dataset)
+    batch_size = dataloader.batch_size
     num_batches = len(dataloader)
 
     print_loss_iter = num_batches // 10
 
     model.train()
 
-    total_loss, correct = 0, 0
+    total_loss, corrects = 0, 0
     for i, (x, t) in enumerate(dataloader):
         x, t = x.to(device), t.to(device)
 
@@ -68,42 +69,47 @@ def train(dataloader, device, model, loss_fn, optimizer):
         loss.backward()
         optimizer.step()
 
-        total_loss += loss.item()
-        correct += (y.argmax(1) == t).type(torch.float).sum().item()
+        total_loss += loss.item() * batch_size
+        corrects += (y.argmax(1) == t).type(torch.float).sum().item()
 
         if i % print_loss_iter == 0:
             print(
-                f"Train loss: {total_loss/(i + 1):.7f} "
-                f"({(i + 1)*len(x)}/{size})"
+                f"Loss: {total_loss / ((i+1)*batch_size):.7f} "
+                f"({(i+1) * len(x)}/{data_size})"
             )
 
-    total_loss /= size
-    correct /= size
+    total_loss /= data_size
+    acc = corrects / data_size
+    print(
+        f"Train accuracy: {(100 * acc):.2f}[%], train loss: {total_loss:.7f}"
+    )
 
-    return total_loss, correct
+    return total_loss, acc
 
 
 def test(dataloader, device, model, loss_fn):
     """Test the network."""
-    size = len(dataloader.dataset)
+    data_size = len(dataloader.dataset)
+    batch_size = dataloader.batch_size
     num_batches = len(dataloader)
 
     model.eval()
 
-    loss, correct = 0, 0
+    loss, corrects = 0, 0
     with torch.no_grad():
         for x, t in test_dataloader:
             x, t = x.to(device), t.to(device)
             y = model(x)
 
-            loss += loss_fn(y, t).item()
-            correct += (y.argmax(1) == t).type(torch.float).sum().item()
+            # Multiply with the number of samples in a mini-batch
+            loss += loss_fn(y, t).item() * batch_size
+            corrects += (y.argmax(1) == t).type(torch.float).sum().item()
 
-    loss /= size
-    correct /= size
-    print(f"Test accuracy: {(100*correct):.2f}[%], test loss: {loss:.7f}")
+    loss /= data_size
+    acc = corrects / data_size
+    print(f"Test accuracy: {(100 * acc):.2f}[%], test loss: {loss:.7f}")
 
-    return loss, correct
+    return loss, acc
 
 
 def plot_histories(train_history, test_history, ylabel):
