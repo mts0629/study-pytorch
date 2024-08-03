@@ -19,24 +19,30 @@ class SimpleCNN(nn.Module):
     def __init__(self):
         super().__init__()
         self.conv1 = nn.Conv2d(
-            in_channels=3, out_channels=16, kernel_size=3, padding=1
+            in_channels=3, out_channels=32, kernel_size=3, padding=1
         )
-        self.bn1 = nn.BatchNorm2d(num_features=16)
-        self.pool = nn.MaxPool2d(kernel_size=2, stride=2)
-        self.conv2 = nn.Conv2d(16, 32, 3, padding=1)
+        self.bn1 = nn.BatchNorm2d(num_features=32)
+        self.conv2 = nn.Conv2d(32, 32, 3, padding=1)
         self.bn2 = nn.BatchNorm2d(32)
+        self.pool = nn.MaxPool2d(kernel_size=2, stride=2)
         self.conv3 = nn.Conv2d(32, 64, 3, padding=1)
         self.bn3 = nn.BatchNorm2d(64)
+        self.conv4 = nn.Conv2d(64, 128, 3, padding=1)
+        self.bn4 = nn.BatchNorm2d(128)
         self.flatten = nn.Flatten(start_dim=1)  # C dim for NCHW
         self.dropout = nn.Dropout(p=0.5)
-        self.fc1 = nn.Linear(in_features=64*4*4, out_features=64)
-        self.fc2 = nn.Linear(64, 128)
-        self.fc3 = nn.Linear(128, 10)
+        self.fc1 = nn.Linear(in_features=128*4*4, out_features=256)
+        self.fc2 = nn.Linear(256, 512)
+        self.fc3 = nn.Linear(512, 10)
 
     def forward(self, x):
-        x = self.pool(F.relu(self.bn1(self.conv1(x))))
-        x = self.pool(F.relu(self.bn2(self.conv2(x))))
-        x = self.pool(F.relu(self.bn3(self.conv3(x))))
+        x = F.relu(self.bn1(self.conv1(x)))
+        x = F.relu(self.bn2(self.conv2(x)))
+        x = self.pool(x)
+        x = F.relu(self.bn3(self.conv3(x)))
+        x = self.pool(x)
+        x = F.relu(self.bn4(self.conv4(x)))
+        x = self.pool(x)
         x = self.flatten(x)
         x = self.dropout(x)
         x = F.relu(self.fc1(x))
@@ -69,6 +75,7 @@ def train(dataloader, device, model, loss_fn, optimizer):
         loss.backward()
         optimizer.step()
 
+        # Multiply with the number of samples in a mini-batch
         total_loss += loss.item() * batch_size
         corrects += (y.argmax(1) == t).type(torch.float).sum().item()
 
@@ -97,11 +104,10 @@ def test(dataloader, device, model, loss_fn):
 
     loss, corrects = 0, 0
     with torch.no_grad():
-        for x, t in test_dataloader:
+        for x, t in dataloader:
             x, t = x.to(device), t.to(device)
             y = model(x)
 
-            # Multiply with the number of samples in a mini-batch
             loss += loss_fn(y, t).item() * batch_size
             corrects += (y.argmax(1) == t).type(torch.float).sum().item()
 
@@ -134,6 +140,13 @@ if __name__ == "__main__":
     # Data transformations
     transform = v2.Compose([
         v2.ToImage(),
+        # Data augmentation
+        # Horizontal flip (20[%])
+        v2.RandomHorizontalFlip(0.2),
+        # Rotation (15[deg])
+        v2.RandomRotation(15),
+        # Change brightness and saturation
+        v2.ColorJitter(brightness=0.3, saturation=0.3),
         v2.ToDtype(torch.float32, scale=True),
         # Normalize to [-1, 1]
         v2.Normalize(mean=(0.5, 0.5, 0.5), std=(0.5, 0.5, 0.5))
@@ -152,7 +165,7 @@ if __name__ == "__main__":
         transform=transform
     )
 
-    BATCH_SIZE = 32
+    BATCH_SIZE = 64
     train_dataloader = DataLoader(
         training_data, batch_size=BATCH_SIZE, shuffle=True
     )
@@ -166,8 +179,14 @@ if __name__ == "__main__":
     print(model)
 
     loss_fn = nn.CrossEntropyLoss()
-    # Momentum SGD
-    optimizer = torch.optim.SGD(model.parameters(), lr=1e-3, momentum=0.9)
+
+    # SGD
+    optimizer = torch.optim.SGD(
+        model.parameters(),
+        lr=1e-3,
+        momentum=0.9,  # Momentum
+        weight_decay=1e-3  # L2 regularization
+    )
 
     # Train/test history
     history = {
@@ -175,7 +194,7 @@ if __name__ == "__main__":
         "test": {"losses": [], "accs": []},
     }
 
-    EPOCHS = 20
+    EPOCHS = 100
     for epoch in range(EPOCHS):
         print(f"--------------------")
         print(f"Epoch {epoch + 1}")
@@ -223,7 +242,7 @@ if __name__ == "__main__":
     sampler = RandomSampler(test_data, num_samples=NUM_TEST)
     eval_loader = DataLoader(test_data, batch_size=1, sampler=sampler)
 
-    correct = 0
+    corrects = 0
     with torch.no_grad():
         for x, t in eval_loader:
             x = x.to(device)
@@ -232,5 +251,5 @@ if __name__ == "__main__":
             predicted, actual = classes[p], classes[t]
             print(f'Predicted: "{predicted}", actual: "{actual}"')
             if p == t:
-                correct += 1
-    print(f"Correct: {correct}/{NUM_TEST} ({correct / NUM_TEST * 100:.1f}[%])")
+                corrects += 1
+    print(f"Correct: {corrects}/{NUM_TEST} ({corrects / NUM_TEST * 100:.1f}[%])")
