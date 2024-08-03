@@ -1,12 +1,15 @@
 FROM pytorch/pytorch:2.3.0-cuda12.1-cudnn8-runtime
 
-RUN apt-get update -y && apt-get upgrade -y && apt-get install -y \
-    git \
-    vim
-
-RUN pip install matplotlib
-
+# Timezone setting
+RUN DEBIAN_FRONTEND=noninteractive apt-get update -y && apt-get upgrade -y && \
+    apt-get install -y tzdata
 ENV TZ Asia/Tokyo
+
+# Install packages
+RUN apt-get install -y git vim && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists*
+RUN pip install matplotlib
 
 # Add a non-root user (overwrite by Dev Container)
 ARG USER=dev
