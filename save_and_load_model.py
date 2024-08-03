@@ -1,11 +1,7 @@
 """Train a simple NN with Fashion-MNIST dataset."""
 
 import torch
-
 import torch.nn.functional as F
-
-import numpy as np
-import matplotlib.pyplot as plt
 
 from torch import nn
 from torch.utils.data import DataLoader, RandomSampler
@@ -44,7 +40,7 @@ def train(dataloader, device, model, loss_fn, optimizer):
 
         optimizer.zero_grad()
 
-        y = model(X)
+        y = model(x)
         loss = loss_fn(y, t)
 
         loss.backward()
@@ -82,7 +78,7 @@ def test(dataloader, device, model, loss_fn):
     print(f"Test accuracy: {(100 * acc):.2f}[%], test loss: {loss:.7f}")
 
 
-def evaluate(model, dataset, device, num_samples, class_labels):
+def evaluate_with_random_samples(model, dataset, device, num_samples, class_labels):
     """Evaluate a model with random-sampled data."""
     # Random sampling from a dataset
     sampler = RandomSampler(dataset, num_samples=num_samples)
@@ -144,28 +140,31 @@ if __name__ == "__main__":
 
     # Training and evaluation
     EPOCHS = 10
-    for epoch in range(EPOSHS):
+    for epoch in range(EPOCHS):
         print(f"--------------------")
         print(f"Epoch {epoch + 1}")
         print(f"--------------------")
-        train(train_dataloader, model, loss_fn, optimizer)
-        test(test_dataloader, model, loss_fn)
+        train(train_dataloader, device, model, loss_fn, optimizer)
+        test(test_dataloader, device, model, loss_fn)
 
+    # Save weights
     WEIGHT_PATH = "work/weight.pth"
     torch.save(model.state_dict(), WEIGHT_PATH)
     print(f'Save weights to "{WEIGHT_PATH}"')
 
+    # Save a whole model by pickle
+    # NOT recommended, because of data binding to the class definitions
     PKL_PATH = "work/simplenn.pt"
     torch.save(model, PKL_PATH)
     print(f'Save a model to "{PKL_PATH}"')
 
-    print(f"--------------------")
-    print(f"Load weights")
-    print(f"--------------------")
-    model = NeuralNet().to(device)
+    print(f"----------------------------------------")
+    print(f'Load the weights from "{WEIGHT_PATH}"')
+    print(f"----------------------------------------")
+    model = SimpleNN().to(device)
     model.load_state_dict(torch.load(WEIGHT_PATH))
-
-    evaluate(
+    print(model)
+    evaluate_with_random_samples(
         model,
         test_data,
         device,
@@ -176,12 +175,13 @@ if __name__ == "__main__":
         ]
     )
 
-    print(f"--------------------")
-    print(f"Load a model")
-    print(f"--------------------")
+    # NOT recommended
+    print(f"----------------------------------------")
+    print(f'Load the whole model from "{PKL_PATH}"')
+    print(f"----------------------------------------")
     model = torch.load(PKL_PATH)
-
-    evaluate(
+    print(model)
+    evaluate_with_random_samples(
         model,
         test_data,
         device,
