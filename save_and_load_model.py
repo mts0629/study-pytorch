@@ -154,9 +154,9 @@ if __name__ == "__main__":
 
     # Save a whole model by pickle
     # NOT recommended, because of data binding to the class definitions
-    PKL_PATH = "work/simplenn.pt"
-    torch.save(model, PKL_PATH)
-    print(f'Save a model to "{PKL_PATH}"')
+    # PKL_PATH = "work/simplenn.pt"
+    # torch.save(model, PKL_PATH)
+    # print(f'Save a model to "{PKL_PATH}"')
 
     print(f"----------------------------------------")
     print(f'Load the weights from "{WEIGHT_PATH}"')
@@ -176,18 +176,18 @@ if __name__ == "__main__":
     )
 
     # NOT recommended
-    print(f"----------------------------------------")
-    print(f'Load the whole model from "{PKL_PATH}"')
-    print(f"----------------------------------------")
-    model = torch.load(PKL_PATH)
-    print(model)
-    evaluate_with_random_samples(
-        model,
-        test_data,
-        device,
-        num_samples=10,
-        class_labels=[
-            "T-shirt/top", "Trouser", "Pullover", "Dress", "Coat",
-            "Sandal", "Shirt", "Sneaker", "Bag", "Ankle boot",
-        ]
-    )
+    # print(f"----------------------------------------")
+    # print(f'Load the whole model from "{PKL_PATH}"')
+    # print(f"----------------------------------------")
+    # model = torch.load(PKL_PATH)
+    # print(model)
+    # evaluate_with_random_samples(
+    #     model,
+    #     test_data,
+    #     device,
+    #     num_samples=10,
+    #     class_labels=[
+    #         "T-shirt/top", "Trouser", "Pullover", "Dress", "Coat",
+    #         "Sandal", "Shirt", "Sneaker", "Bag", "Ankle boot",
+    #     ]
+    # )
