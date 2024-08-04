@@ -1,4 +1,4 @@
-"""Train a simple NN with Fashion-MNIST dataset."""
+"""Save and load a trained model."""
 
 import torch
 import torch.nn.functional as F
