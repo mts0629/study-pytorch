@@ -43,13 +43,26 @@ if __name__ == "__main__":
     model = SimpleNN()
     print(model)
 
-    x = test_data[0][0]
-
     # Get a TorchScript IR
+    x = test_data[0][0]  # Input shape is fixed
     traced_model = torch.jit.trace(model, x)
 
+    print(type(traced_model))
     print(traced_model)
 
-    print(traced_model(x))
+    # The same result with nn.Module can be get
+    assert torch.equal(model(x), traced_model(x))
 
+    # Graph representation
     print(traced_model.graph)
+    # Python-syntax interpretation
+    print(traced_model.code)
+
+    # Save the TorchScript module
+    # includes code, parameters, attributes and debug information
+    SCRIPT_PATH = "work/simplenn.pt"
+    traced_model.save(SCRIPT_PATH)
+
+    # Load the module (to CPU)
+    pt_model = torch.jit.load(SCRIPT_PATH).to("cpu").eval()
+    assert torch.equal(model(x), pt_model(x))
