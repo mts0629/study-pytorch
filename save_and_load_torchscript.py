@@ -69,8 +69,8 @@ def get_tracing():
     assert torch.equal(model(x), pt_model(x))
 
 
-def get_script():
-    """Get a TorchScript."""
+def get_scripting():
+    """Get a TorchScript scripting."""
     class Gate(nn.Module):
         """Gate module, fake RNN."""
 
@@ -93,25 +93,32 @@ def get_script():
             return new_h, new_h
 
 
-    x = torch.rand(3, 4)
-    h = torch.rand(3, 4)
+    x, h = torch.rand(3, 4), torch.rand(3, 4)
 
     cell = Cell(Gate())
     print(cell)
 
-    traced_cell = torch.jit.trace(cell)
+    # No dynamic graph structure by control flow
+    print("***** Tracing *****")
+    traced_cell = torch.jit.trace(cell, (x, h))
     print(traced_cell.code)
 
-
+    # Convert to TorchScript IR with scripting
     scripted_gate = torch.jit.script(Gate())
     scripted_cell = torch.jit.script(Cell(scripted_gate))
 
+    # Dynamic struture by if-else exists in the IR
+    print("***** Scripting *****")
     print(scripted_gate.code)
     print(scripted_cell.code)
 
+    # Tracing/scripting can be mixed
+    mixed_traced_cell = torch.jit.trace(Cell(scripted_gate), (x, h))
+    print("***** Mix tracing and scripting *****")
+    print(mixed_traced_cell.code)
 
 
 if __name__ == "__main__":
     # get_tracing()
 
-    get_script()
+    get_scripting()
