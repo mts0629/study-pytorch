@@ -3,6 +3,8 @@
 import torch
 import torch.nn.functional as F
 
+import onnxruntime as ort
+
 from torch import nn
 
 
@@ -44,14 +46,32 @@ if __name__ == "__main__":
 
     # TorchDynamo-based ONNX exporter
     onnx_program = torch.onnx.dynamo_export(model, x)
-    onnx_program.save("./work/simplecnn_dynamo.onnx")
+    output_path = "./work/simplecnn_dynamo.onnx"
+    onnx_program.save(output_path)
 
     # TorchScript-based ONNX exporter
+    output_path = "./work/simplecnn_ts.onnx"
     torch.onnx.export(
         model,
         x,
-        "./work/simplecnn_ts.onnx",
+        output_path,
         verbose=True,  # Show human-readable representation
         input_names=["input"],
         output_names=["logit"]
     )
+
+    # Create an ONNX Runtime inference session
+    ort_session = ort.InferenceSession(
+        output_path,
+        providers=["CPUExecutionProvider"]  # CPU execution
+    )
+
+    # Run the session
+    y_ort = ort_session.run(None, {"input": x.numpy()})
+
+    # Compare the result with that of PyTorch model
+    y_torch = model(x)
+    torch.testing.assert_close(y_torch, torch.tensor(y_ort[0]))
+
+    print(f"Torch: {y_torch}")
+    print(f"ORT: {y_ort}")

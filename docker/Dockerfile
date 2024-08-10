@@ -9,7 +9,7 @@ ENV TZ Asia/Tokyo
 RUN apt-get install -y git vim && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists*
-RUN pip install matplotlib onnx onnxscript
+RUN pip install matplotlib onnx onnxscript onnxruntime
 
 # Add a non-root user (overwrite by Dev Container)
 ARG USER=dev
