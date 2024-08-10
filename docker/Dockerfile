@@ -24,6 +24,14 @@ ARG HOME_DIR=/home/dev
 RUN mkdir -p $HOME_DIR
 RUN chown -R $UID:$GID $HOME_DIR
 
+# Create directres for VSCode extensions to avoid reinstall extensions
+# (ref: https://qiita.com/P-man_Brown/items/645c350ff89d991f6717)
+RUN mkdir -p /home/$USER/.vscode-server/extensions \
+    /home/$USER/.vscode-server-insiders/extensions \
+    && chown -R $USER \
+    /home/$USER/.vscode-server \
+    /home/$USER/.vscode-server-insiders
+
 USER $USER
 ENV HOME $HOME_DIR
 
