@@ -25,16 +25,12 @@ if __name__ == "__main__":
     )
 
     # Get a profile with memory consumption
-    model = models.resnet18()
-    inputs = torch.randn(8, 3, 224, 224)
-
     with profile(
         activities=[ProfilerActivity.CPU],
         profile_memory=True,
         record_shapes=True
     ) as prof:
-        with record_function("model_inference"):
-            model(inputs)
+        model(inputs)
 
     # Sort by a memory amount allocated by the operator itself
     print(
@@ -43,4 +39,27 @@ if __name__ == "__main__":
     # Sort by a memory amount allocated by the operator and its children
     print(
         prof.key_averages().table(sort_by="cpu_memory_usage", row_limit=10)
+    )
+
+    # Get a profile of CPU and GPU activities (with shape info)
+    ### Doesn't work on WSL? ###
+    # with profile(
+    #     activities=[ProfilerActivity.CPU, ProfilerActivity.CUDA],
+    #     record_shapes=True
+    # ) as prof:
+    #     with record_function("model_inference"):
+    #         model(inputs)
+    # Sort by total GPU time
+    # print(prof.key_averages().table(sort_by="cuda_time_total", row_limit=10))
+
+    # Export a trace file for the Chrome trace viewer
+    prof.export_chrome_trace("./work/trace.json")
+
+    # Python and TorchScript stack traces
+    with profile(activities=[ProfilerActivity.CPU], with_stack=True) as prof:
+        model(inputs)
+
+    print(
+        prof.key_averages(group_by_stack_n=5)\
+            .table(sort_by="self_cpu_time_total", row_limit=2)
     )
