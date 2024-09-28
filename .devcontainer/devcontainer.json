@@ -12,5 +12,13 @@
     },
     "runArgs": [
         "--gpus", "all"
-    ]
+    ],
+    "customizations": {
+        "vscode": {
+            "extensions": [
+                "ms-python.python",
+                "ms-toolsai.jupyter"
+            ]
+        }
+    }
 }
