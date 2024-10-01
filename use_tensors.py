@@ -25,3 +25,24 @@ if __name__ == "__main__":
 
     array_from_x = x.numpy()
     print(array_from_x)
+
+    # Autograd
+    print("# Autograd")
+    y = torch.tensor(
+        [[5, 6],
+         [7, 8]],
+        dtype=torch.float32,
+        requires_grad=True
+    )
+
+    x.requires_grad_()  # x.requires_grad = True
+
+    z = x * y
+    z = z.sum()  # Need to create scalar outputs
+    z.backward()
+    print(x.grad)
+    print(y.grad)
+
+    with torch.no_grad():
+        z = x * y
+    print(z.requires_grad)
